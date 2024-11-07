@@ -1,13 +1,18 @@
 function generateBoard() {
   const adjacencyList = new Map();
+  function getKey(i, j) {
+    return `[${i},${j}]`;
+  }
 
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
-      adjacencyList.set(`[${i},${j}]`, findValidMoves([i, j]));
+      adjacencyList.set(getKey(i, j), findValidMoves([i, j]));
     }
   }
-
-  return adjacencyList;
+  return {
+    get: (coords) => adjacencyList.get(getKey(coords[0], coords[1])),
+    adjacencyList,
+  };
 }
 
 function findValidMoves(pos) {
@@ -36,13 +41,44 @@ function findValidMoves(pos) {
   return validMoves;
 }
 
-function knightMoves(pos1, pos2) {
-  const board = generateBoard(),
-    strPos1 = `[${pos1[0]},${pos1[1]}]`,
-    strPos2 = `[${pos2[0]},${pos2[1]}]`;
-
-  console.log(board.get(strPos1));
-  console.log(board.get(strPos2));
+function arrayIncludes(arr, pos) {
+  return arr.some((ele) => ele[0] === pos[0] && ele[1] === pos[1]);
 }
 
-knightMoves([1, 1], [2, 2]);
+function shortestPath(pos1, pos2) {
+  const board = generateBoard();
+  const queue = [{ position: pos1, path: [pos1] }];
+  const squaresVisited = [pos1];
+
+  while (queue.length !== 0) {
+    const current = queue.shift();
+    const position = current.position;
+    const path = current.path;
+
+    if (arrayIncludes([position], pos2)) {
+      return path;
+    }
+
+    const moves = board.get(position);
+    moves.forEach((move) => {
+      if (!arrayIncludes(squaresVisited, move)) {
+        queue.push({ position: move, path: path.concat([move]) });
+        squaresVisited.push(move);
+      }
+    });
+  }
+}
+
+function knightMoves(pos1, pos2) {
+  const path = shortestPath(pos1, pos2);
+
+  console.log(
+    path.length == 2
+      ? "You made it in just 1 move! Here's your path:"
+      : `You made it in ${path.length - 1} moves! Here's your path:`
+  );
+  console.log(path.shift());
+  path.forEach((move) => console.log(move));
+}
+
+knightMoves([0, 0], [7, 7]);
